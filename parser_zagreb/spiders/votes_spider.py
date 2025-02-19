@@ -1,9 +1,6 @@
-import json
-import re
-from datetime import datetime
-
-import requests
 import scrapy
+
+from parser_zagreb.items import VoteItem
 
 
 class VotesSpider(scrapy.Spider):
@@ -15,7 +12,7 @@ class VotesSpider(scrapy.Spider):
 
     def parse(self, response):
         sessions = response.css("select[name='rb_sjednice']>option::text").extract()
-        for session in reversed(sessions):
+        for session in reversed(sessions[-1:]):
             url = f"https://web.zagreb.hr/sjednice/2021/sjednice_skupstine_2021.nsf/DRJ?OpenAgent&{session.strip()}"
             yield scrapy.Request(
                 url=url,
@@ -35,7 +32,7 @@ class VotesSpider(scrapy.Spider):
 
     def parser_vote(self, response):
         vote_name = response.css("td>b>font::text").extract()
-        champion = response.css("td>font::text").extract()
+        champions = response.css("td>font::text").extract()
         no_agenda = "".join(response.css("td::text").extract()).strip()
 
         links = []
@@ -49,11 +46,11 @@ class VotesSpider(scrapy.Spider):
             text = link.css("font::text").extract_first()
             links.append({"href": href, "text": text.strip()})
 
-        yield {
-            "vote_name": vote_name,
-            "champion": champion,
-            "links": links,
-            "session_text": response.meta["session_text"],
-            "no_agenda": no_agenda,
-            "url": response.url,
-        }
+        yield VoteItem(
+            vote_name=vote_name,
+            champions=champions,
+            links=links,
+            session_text=response.meta["session_text"],
+            no_agenda=no_agenda,
+            url=response.url,
+        )

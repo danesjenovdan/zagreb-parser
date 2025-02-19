@@ -1,12 +1,8 @@
-import json
-import re
-from datetime import datetime
-
-import requests
 import scrapy
 
+from parser_zagreb.items import QuestionItem
 
-class NotesSpider(scrapy.Spider):
+class QuestionsSpider(scrapy.Spider):
     name = "questions"
     base_url = "https://web.zagreb.hr"
     start_urls = [
@@ -32,15 +28,18 @@ class NotesSpider(scrapy.Spider):
                 )
     
     def parse_single_session(self, response):
+        session_name = response.css("body>table>tr")[1].css("td::text").extract()
         for link in response.css("a.nav"):
             link = link.css("::attr(href)").extract_first()
             yield scrapy.Request(
                 url=f"{self.base_url}{link}",
                 callback=(self.question_parser),
+                meta={"session_name": session_name},
             )
 
     def question_parser(self, response):
-        asker = response.css("div[align='right'] font::text").extract()
+        author = response.css("div[align='right'] font::text").extract()
+        recipient = response.css("tr[valign='top']>td>table>tr>td>i> font::text").extract()
         texts = response.css("tr[valign='top']>td>font::text").extract()
         links = []
         dom_links = response.css("a")
@@ -52,11 +51,13 @@ class NotesSpider(scrapy.Spider):
                 path = onclick.split("'")[1]
                 href = f"{self.base_url}{path}"
             text = link.css("font::text").extract_first()
-            links.append({"href": href, "text": text.strip()})
+            links.append({"url": href, "text": text.strip()})
 
-        yield {
-            "asker": asker,
-            "title": texts,
-            "links": links,
-            "url": response.url
-        }
+        yield QuestionItem(
+            author=author,
+            recipient=recipient,
+            title=texts,
+            links=links,
+            url=response.url,
+            session_text=response.meta.get("session_name"),
+        )
