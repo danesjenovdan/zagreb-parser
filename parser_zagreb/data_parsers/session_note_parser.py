@@ -1,6 +1,7 @@
-from .base_parser import BaseParser
+import logging
+import re
 
-import logging, re
+from .base_parser import BaseParser
 
 logger = logging.getLogger("session logger")
 
@@ -17,9 +18,11 @@ class SessionNotesParser(BaseParser):
         super(SessionNotesParser, self).__init__(storage)
         logger.info(".:SESSION NOTE PARSER:.")
 
-        organization = self.storage.organization_storage.get_or_add_object({
-            "name": self.parse_organization(item.get("text")),
-        })
+        organization = self.storage.organization_storage.get_or_add_object(
+            {
+                "name": self.parse_organization(item.get("text")),
+            }
+        )
 
         logger.info(organization.id)
 
@@ -47,6 +50,6 @@ class SessionNotesParser(BaseParser):
     def parse_session_name(self, text):
         no_session = re.search(r"(\d+).", text).group(1)
         return f"{no_session}. sjednica Gradske skupštine Grada Zagreba"
-    
+
     def parse_organization(self, text):
         return re.search(r"([0-9]{1,2})(\. sjednice) ([a-zA-Zš ]*)", text).group(3)

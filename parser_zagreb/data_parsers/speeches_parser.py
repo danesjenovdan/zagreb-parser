@@ -1,13 +1,10 @@
 import re
-
-from docx import Document
+from datetime import datetime, timedelta
+from enum import Enum
 from os import listdir
 from os.path import isfile, join
-from datetime import timedelta, datetime
-from enum import Enum
-from docx2python import docx2python
 
-from .base_parser import BaseParser
+from docx2python import docx2python
 
 
 class ParserState(Enum):
@@ -25,12 +22,11 @@ class SpeechesParser(object):
         transcript_files.sort()
 
         for file_name in transcript_files:
-        
+
             print(file_name)
             with docx2python(f"{path}/{file_name}") as docx_content:
                 self.document = docx_content.text.split("\n")
                 self.parse(file_name)
-
 
     def parse(self, file_name):
 
@@ -51,7 +47,9 @@ class SpeechesParser(object):
         )
 
         print(session.start_time)
-        start_time = datetime.fromisoformat(session.start_time) + timedelta(days=int(session_day))
+        start_time = datetime.fromisoformat(session.start_time) + timedelta(
+            days=int(session_day)
+        )
         print(start_time)
         print(session.name)
 
@@ -86,7 +84,9 @@ class SpeechesParser(object):
                             "content": fixed_text.strip(),
                             "session": session.id,
                             "order": order,
-                            "start_time": (start_time+timedelta(seconds=order)).isoformat(),
+                            "start_time": (
+                                start_time + timedelta(seconds=order)
+                            ).isoformat(),
                         }
                     )
                     current_person = person
@@ -94,7 +94,6 @@ class SpeechesParser(object):
                     order += 1
                 else:
                     current_person = person
-                    
 
             elif state == ParserState.CONTENT:
                 if not current_text and text.startswith("-"):
@@ -109,12 +108,12 @@ class SpeechesParser(object):
                 "content": fixed_text.strip(),
                 "session": session.id,
                 "order": order,
-                "start_time": (start_time+timedelta(minutes=order)).isoformat(),
+                "start_time": (start_time + timedelta(minutes=order)).isoformat(),
             }
         )
 
         session.add_speeches(self.speeches)
-                
+
     def skip_line(self, text):
         if text.startswith("……"):
             return True
@@ -123,14 +122,14 @@ class SpeechesParser(object):
         elif text.startswith("* * * * *"):
             return True
         return False
-    
+
     def fix_speech_content(self, content):
         repalce_chars = [("«", '"'), ("»", '"')]
         for org_char, rapcece_char in repalce_chars:
             content = content.replace(org_char, rapcece_char)
 
         return content
-    
+
     def parse_name_from_line(self, line):
         name = re.search(r"([A-ZČŽŠĐĆÖ -]*)( iz klupe)?:$", line)
         if name:

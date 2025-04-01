@@ -21,6 +21,7 @@ class VoteItem(scrapy.Item):
     url_text = scrapy.Field()
     order = scrapy.Field()
 
+
 class QuestionItem(scrapy.Item):
     author = scrapy.Field()
     recipient = scrapy.Field()
@@ -28,6 +29,7 @@ class QuestionItem(scrapy.Item):
     links = scrapy.Field()
     url = scrapy.Field()
     session_text = scrapy.Field()
+
 
 class MemberItem(scrapy.Item):
     name = scrapy.Field()

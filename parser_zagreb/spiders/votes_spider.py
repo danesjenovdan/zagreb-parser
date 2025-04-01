@@ -31,10 +31,7 @@ class VotesSpider(scrapy.Spider):
         text_with_session_name = (
             response.css("table")[0].css("tr")[2].css("::text").extract_first().strip()
         )
-        self.data = {
-            "session_text": text_with_session_name,
-            "votes": []
-        }
+        self.data = {"session_text": text_with_session_name, "votes": []}
         links = response.css("a.nav")
         self.total_links = len(links)
         for order, link in enumerate(links):
