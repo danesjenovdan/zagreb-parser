@@ -2,7 +2,7 @@ name: Check formatting
 on:
   push:
     branches:
-      - "dev"
+      - "main"
 jobs:
   check_python_formatting:
     name: Check Python formatting
@@ -22,8 +22,8 @@ jobs:
 
       - name: Check formatting with black
         run: |
-          (cd ./parladata && black . --check --diff)
+          (black . --check --diff)
 
       - name: Check formatting with isort
         run: |
-          (cd ./parladata && isort . --check --diff --profile black)
+          (isort . --check --diff --profile black)
