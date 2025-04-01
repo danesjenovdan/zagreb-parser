@@ -6,4 +6,4 @@ resources:
 images:
   - name: parlaparser-zagreb-update
     newName: rg.fr-par.scw.cloud/djnd/parlaparser-zagreb-update
-    newTag: 'fdb428c87fead7e5cbc029e398087dfe2959b0a7'
+    newTag: 'cb054ad76450991b96aea5a5ed67c0971bcc2d72'
