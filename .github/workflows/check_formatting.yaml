@@ -26,4 +26,4 @@ jobs:
 
       - name: Check formatting with isort
         run: |
-          (cd ./parladata && isort . --check --diff --profile black)
+          (isort . --check --diff --profile black)

@@ -1,3 +1,6 @@
+import os
+from datetime import datetime
+
 # Scrapy settings for parser_zagreb project
 #
 # For simplicity, this file contains only settings considered important or
