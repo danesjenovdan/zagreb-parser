@@ -1,16 +1,13 @@
 import scrapy
+from slugify import slugify
 
 from parser_zagreb.items import MemberItem
-
-from slugify import slugify
 
 
 class MembersSpider(scrapy.Spider):
     name = "members"
     base_url = "https://skupstina.zagreb.hr"
-    start_urls = [
-        "https://skupstina.zagreb.hr/gradski-zastupnici-31/31"
-    ]
+    start_urls = ["https://skupstina.zagreb.hr/gradski-zastupnici-31/31"]
 
     def parse(self, response):
         for url in response.css("div.page-text>a::attr(href)").extract():
@@ -24,7 +21,7 @@ class MembersSpider(scrapy.Spider):
 
         texts = response.css("div.page-text ::text").extract()
 
-        state=""
+        state = ""
 
         party = ""
         committees = []
@@ -54,7 +51,7 @@ class MembersSpider(scrapy.Spider):
                 party = line.strip()
 
             elif state == "committee":
-                committees.append(line.strip())           
+                committees.append(line.strip())
 
         yield MemberItem(
             name=name,

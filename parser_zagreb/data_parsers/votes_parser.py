@@ -1,12 +1,12 @@
-from .base_parser import BaseParser
-
+import logging
+import re
 from datetime import datetime, timedelta
 
+import openpyxl
 import requests
 from pypdf import PdfReader
 
-import logging, re, openpyxl
-
+from .base_parser import BaseParser
 
 logger = logging.getLogger("session logger")
 
@@ -46,9 +46,11 @@ class VotesParser(BaseParser):
 
         self.log_file = open("parser_log.txt", "a")
 
-        organization = self.storage.organization_storage.get_or_add_object({
-            "name": self.parse_organization(item.get("session_text")),
-        })
+        organization = self.storage.organization_storage.get_or_add_object(
+            {
+                "name": self.parse_organization(item.get("session_text")),
+            }
+        )
 
         self.session = storage.session_storage.get_or_add_object(
             {
@@ -72,24 +74,25 @@ class VotesParser(BaseParser):
             xml_votes = BallotsXLSParser().parse_file(file_name)
         except FileNotFoundError:
             return
-        
-        self.log_file.write(f"\n _________________________________________________________________________________ \n")
-        
-        self.log_file.write(f"\n ----> {self.parse_session_name(item.get('session_text'))} <---- \n")
+
+        self.log_file.write(
+            f"\n _________________________________________________________________________________ \n"
+        )
+
+        self.log_file.write(
+            f"\n ----> {self.parse_session_name(item.get('session_text'))} <---- \n"
+        )
         url = f"https://web.zagreb.hr/sjednice/2021/sjednice_skupstine_2021.nsf/DRJ?OpenAgent&{session_no}"
         self.log_file.write(f"\nLink do sjednice: {url} \n")
 
-        
         item["votes"].sort(key=lambda x: x.get("order"))
 
         for vote_item in item["votes"]:
             vote_name = " ".join(vote_item.get("vote_name"))
 
-
-            if self.session.vote_storage.check_if_motion_is_parsed({
-                "text": vote_name,
-                "datetime": session_start_time.isoformat()
-            }):
+            if self.session.vote_storage.check_if_motion_is_parsed(
+                {"text": vote_name, "datetime": session_start_time.isoformat()}
+            ):
                 print("Skip motion")
                 continue
 
@@ -110,8 +113,12 @@ class VotesParser(BaseParser):
                         xml_vote_matches.append(temp_xml_vote)
                         xml_votes[idx]["parsed"] = True
 
-            agenda_name = self.agenda_item_name(vote_name, vote_item.get("no_agenda"), sub_agenda)
-            start_time = (session_start_time + timedelta(minutes=int(order))).isoformat()
+            agenda_name = self.agenda_item_name(
+                vote_name, vote_item.get("no_agenda"), sub_agenda
+            )
+            start_time = (
+                session_start_time + timedelta(minutes=int(order))
+            ).isoformat()
             ai = self.save_agenda_item(order, agenda_name, start_time)
 
             if not ai.is_new:
@@ -124,14 +131,15 @@ class VotesParser(BaseParser):
                 print("NO MATCH")
                 print("...:::::!!!!!!:::::.....")
                 print(vote_name)
-                #self.log_file.write(f"Session {session_no}, vote: {vote_name} not found in xls by agenda number\n")
+                # self.log_file.write(f"Session {session_no}, vote: {vote_name} not found in xls by agenda number\n")
 
-                self.log_file.write(f"""
+                self.log_file.write(
+                    f"""
 Dodana je točka dnevnega reda brez glasovanja: {agenda_name}
 Povezava na točko: {ai_parladata_url}
 """
-                    )
-                
+                )
+
                 for link in vote_item.get("links"):
                     self.storage.parladata_api.links.set(
                         {
@@ -146,16 +154,27 @@ Povezava na točko: {ai_parladata_url}
                 continue
 
             if len(xml_vote_matches) == 1:
-                self.save_vote(xml_vote_matches[0], vote_item, vote_name, self.session, start_time, ai)
+                self.save_vote(
+                    xml_vote_matches[0],
+                    vote_item,
+                    vote_name,
+                    self.session,
+                    start_time,
+                    ai,
+                )
             else:
                 for xml_vote in xml_vote_matches:
                     vote_name = xml_vote["name"]
-                    self.save_vote(xml_vote, vote_item, vote_name, self.session, start_time, ai)
+                    self.save_vote(
+                        xml_vote, vote_item, vote_name, self.session, start_time, ai
+                    )
 
         for xml_vote in xml_votes:
             if not xml_vote.get("parsed"):
                 name = xml_vote.get("name", f"Glasanje bez imena: {xml_vote['order']}")
-                motion_obj = self.save_vote(xml_vote, None, name, self.session, start_time, None)
+                motion_obj = self.save_vote(
+                    xml_vote, None, name, self.session, start_time, None
+                )
                 motion_url = f"https://parladata-zagreb.lb.djnd.si/admin/parladata/motion/{motion_obj.id}/change/"
                 self.log_file.write(
                     f"""
@@ -168,13 +187,15 @@ Povezava na motion: {motion_url}
         self.log_file.close()
 
     def save_agenda_item(self, order, name, start_time):
-        ai = self.session.agenda_items_storage.get_or_add_object({
-            "datetime": start_time,
-            "name": name,
-            "session": self.session.id,
-            "order": order+1,
-            #"gov_id": vote_item.get ("url")
-        })
+        ai = self.session.agenda_items_storage.get_or_add_object(
+            {
+                "datetime": start_time,
+                "name": name,
+                "session": self.session.id,
+                "order": order + 1,
+                # "gov_id": vote_item.get ("url")
+            }
+        )
         return ai
 
     def save_vote(self, xml_vote, vote_item, vote_name, session, start_time, ai):
@@ -202,14 +223,14 @@ Povezava na motion: {motion_url}
                     }
                 )
         return motion_obj
-    
+
     def agenda_item_name(self, name, no_agenda, sub_agenda):
         if sub_agenda:
             sub_agenda = f"{sub_agenda.lstrip("0")}."
         else:
             sub_agenda = ""
         return f"Točka {no_agenda}.{sub_agenda} {name}"
-    
+
     def parse_results(self, text):
         if text == "Prijedlog usvojen":
             return True
@@ -223,9 +244,9 @@ Povezava na motion: {motion_url}
             for ballot in ballots:
                 if ballot["name"] in ["Predsjedavajući", ".  ()"]:
                     continue
-                voter = self.storage.people_storage.get_or_add_object({
-                    "name": ballot.pop("name")
-                })
+                voter = self.storage.people_storage.get_or_add_object(
+                    {"name": ballot.pop("name")}
+                )
                 ballot["vote"] = motion.vote.id
                 ballot["personvoter"] = voter.id
                 data.append(ballot)
@@ -236,19 +257,21 @@ Povezava na motion: {motion_url}
 
     def parse_session_name(self, text):
         return re.search(r"([0-9]{1,2})(\. sjednica) ([a-zA-Zš ]*)", text).group(0)
-    
+
     def parse_organization(self, text):
         return re.search(r"([0-9]{1,2})(\. sjednica) ([a-zA-Zš ]*)", text).group(3)
-    
+
     def parse_start_time(self, text):
-        groups = re.search(r"([0-9]{2}\.[0-9]{2}\.[0-9]{4})\su\s([0-9]{2}:[0-9]{2})h", text)
+        groups = re.search(
+            r"([0-9]{2}\.[0-9]{2}\.[0-9]{4})\su\s([0-9]{2}:[0-9]{2})h", text
+        )
         return datetime.strptime(groups[0], "%d.%m.%Y u %H:%Mh")
-    
+
     def get_order(self, text):
         return re.search(r"\d+", text).group(0)
 
 
-class BallotsXLSParser():
+class BallotsXLSParser:
     def parse_file(self, file_path="files/41. sjednica GSGZ.xlsx"):
         wb_obj = openpyxl.load_workbook(file_path)
         sheet_obj = wb_obj.active
@@ -279,22 +302,24 @@ class BallotsXLSParser():
                 if not "name" in single_vote:
                     continue
                 single_vote["file"] = self.file_path
-                #print(single_vote)
+                # print(single_vote)
                 try:
-                    re_name = re.search(session_name_regex, single_vote["name"]).groups()
+                    re_name = re.search(
+                        session_name_regex, single_vote["name"]
+                    ).groups()
                 except AttributeError:
                     print("ERROR no group")
-                    #print(single_vote)
-                    re_name = ["","","",single_vote["name"]]
+                    # print(single_vote)
+                    re_name = ["", "", "", single_vote["name"]]
 
                 single_vote["name"] = re_name[3]
                 single_vote["ai_order"] = re_name[0]
                 single_vote["ai_sub_order"] = re_name[2]
                 single_vote["order"] = order
                 order += 1
-                #print(single_vote)
+                # print(single_vote)
                 output.append(single_vote)
-                #x = input()
+                # x = input()
                 single_vote = {"ballots": []}
                 self.state = "META"
             if self.state == "META":
@@ -311,41 +336,47 @@ class BallotsXLSParser():
                         single_vote["result"] = row[0].split("\n")[1]
                     else:
                         continue
-                elif row[0].lower() == "ime" and row[1] == None:# and row[2].lower() == "za":
+                elif (
+                    row[0].lower() == "ime" and row[1] == None
+                ):  # and row[2].lower() == "za":
                     self.option_indexes = self.get_options_order(row)
                     self.state = "BALLOTS"
-                    
+
             elif self.state == "BALLOTS":
-                if row[0].lower() == "ime" and row[1] == None:# and row[2].lower() == "za":
+                if (
+                    row[0].lower() == "ime" and row[1] == None
+                ):  # and row[2].lower() == "za":
                     self.option_indexes = self.get_options_order(row)
                 elif row[0].startswith("*"):
                     continue
                 else:
                     name = row[0].split("(")[0].strip()
-                    single_vote["ballots"].append({
-                        "name": name,
-                        "option": self.get_option(self.parse_option(row))
-                    })
+                    single_vote["ballots"].append(
+                        {
+                            "name": name,
+                            "option": self.get_option(self.parse_option(row)),
+                        }
+                    )
             elif self.state == "NAME":
                 if row[0] == "Ukupni rezultat glasovanja":
                     self.state = "STATS"
                 else:
                     if "Ukupni rezultat glasovanja" in row[0].split("\n"):
-                        #print("merged lines")
+                        # print("merged lines")
                         self.state = "STATS"
                         single_vote["name"] = row[0]
                     else:
-                        #print("OK ime")
+                        # print("OK ime")
                         single_vote["name"] = row[0]
         if single_vote["ballots"]:
             single_vote["file"] = self.file_path
-            #print(single_vote)
+            # print(single_vote)
             try:
                 re_name = re.search(session_name_regex, single_vote["name"]).groups()
             except AttributeError:
                 print("ERROR no group")
-                #print(single_vote)
-                re_name = ["","","",single_vote["name"]]
+                # print(single_vote)
+                re_name = ["", "", "", single_vote["name"]]
             single_vote["name"] = re_name[3]
             single_vote["ai_order"] = re_name[0]
             single_vote["ai_sub_order"] = re_name[2]
@@ -361,7 +392,7 @@ class BallotsXLSParser():
         for option, index in self.option_indexes.items():
             if position == index:
                 return option
-        
+
     def get_options_order(self, row):
         indexes = {"za": None, "protiv": None, "suzdržan": None, "odsutan": None}
         for key in indexes.keys():
@@ -370,13 +401,13 @@ class BallotsXLSParser():
                     indexes[key] = i
         print(indexes)
         return indexes
-    
+
     def get_option(self, option):
         options_map = {
             "za": "for",
             "protiv": "against",
             "suzdržan": "abstain",
             "odsutan": "absent",
-            "error": "absent"
+            "error": "absent",
         }
         return options_map[option]

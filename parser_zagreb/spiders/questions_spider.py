@@ -2,6 +2,7 @@ import scrapy
 
 from parser_zagreb.items import QuestionItem
 
+
 class QuestionsSpider(scrapy.Spider):
     name = "questions"
     base_url = "https://web.zagreb.hr"
@@ -26,7 +27,7 @@ class QuestionsSpider(scrapy.Spider):
                     url=f"{self.base_url}{link}",
                     callback=(self.question_parser),
                 )
-    
+
     def parse_single_session(self, response):
         session_name = response.css("body>table>tr")[1].css("td::text").extract()
         for link in response.css("a.nav"):
@@ -39,7 +40,9 @@ class QuestionsSpider(scrapy.Spider):
 
     def question_parser(self, response):
         author = response.css("div[align='right'] font::text").extract()
-        recipient = response.css("tr[valign='top']>td>table>tr>td>i> font::text").extract()
+        recipient = response.css(
+            "tr[valign='top']>td>table>tr>td>i> font::text"
+        ).extract()
         texts = response.css("tr[valign='top']>td>font::text").extract()
         links = []
         dom_links = response.css("a")

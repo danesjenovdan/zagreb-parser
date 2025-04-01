@@ -1,6 +1,7 @@
 import scrapy
 
-from  parser_zagreb.items import SessionNoteItem
+from parser_zagreb.items import SessionNoteItem
+
 
 class NotesSpider(scrapy.Spider):
     name = "notes"

@@ -1,6 +1,7 @@
-from .base_parser import BaseParser
+import logging
+import re
 
-import logging, re
+from .base_parser import BaseParser
 
 logger = logging.getLogger("session logger")
 
@@ -11,9 +12,9 @@ class MemberParser(BaseParser):
         {
             "name": "Mauro Sirotnjak",
             "party": "Nova ljevica",
-            "committee": 
+            "committee":
                 [
-                    "predsjednik Odbora za prostorno uređenje", 
+                    "predsjednik Odbora za prostorno uređenje",
                     "član Odbora za kontrolu"
                 ]
         },
@@ -22,17 +23,17 @@ class MemberParser(BaseParser):
         super(MemberParser, self).__init__(storage)
         logger.info(".:MEMBER PARSER:.")
 
-        person = self.storage.people_storage.get_or_add_object({
-            "name": item["name"]
-        })
+        person = self.storage.people_storage.get_or_add_object({"name": item["name"]})
 
         if item["party"] in ["nestranačka", "Nestranački", "nestranački"]:
             organization = None
         else:
-            organization = self.storage.organization_storage.get_or_add_object({
-                "name": item["party"],
-                "classification": "pg",
-            })
+            organization = self.storage.organization_storage.get_or_add_object(
+                {
+                    "name": item["party"],
+                    "classification": "pg",
+                }
+            )
             if organization.is_new:
                 # TODO fix parladata base api
                 # self.storage.organization_membership_storage.get_or_add_object({
@@ -43,16 +44,16 @@ class MemberParser(BaseParser):
                 #     "mandate": self.storage.mandate_id,
                 # })
 
-                self.storage.parladata_api.organizations_memberships.set({
-                    "member": organization.id,
-                    "organization": self.storage.main_org_id,
-                    "start_time": None,
-                    "end_time": None,
-                    "mandate": self.storage.mandate_id,
-                })
+                self.storage.parladata_api.organizations_memberships.set(
+                    {
+                        "member": organization.id,
+                        "organization": self.storage.main_org_id,
+                        "start_time": None,
+                        "end_time": None,
+                        "mandate": self.storage.mandate_id,
+                    }
+                )
                 organization.is_new = False
-
-        
 
         member_data = {
             "member": person.id,
@@ -83,20 +84,24 @@ class MemberParser(BaseParser):
             role_str = tokens.pop(0)
             role = self.get_role(role_str)
             name = " ".join(tokens)
-            committee = self.storage.organization_storage.get_or_add_object({
-                "name": name,
-                "classification": "committee",
-            })
-                
-            self.storage.membership_storage.get_or_add_object({
-                "member": person.id,
-                "role": role,
-                "organization": committee.id,
-                "start_time": None,
-                "end_time": None,
-                "on_behalf_of": None,
-                "mandate": self.storage.mandate_id,
-            })
+            committee = self.storage.organization_storage.get_or_add_object(
+                {
+                    "name": name,
+                    "classification": "committee",
+                }
+            )
+
+            self.storage.membership_storage.get_or_add_object(
+                {
+                    "member": person.id,
+                    "role": role,
+                    "organization": committee.id,
+                    "start_time": None,
+                    "end_time": None,
+                    "on_behalf_of": None,
+                    "mandate": self.storage.mandate_id,
+                }
+            )
 
     def get_role(self, role_str):
         if role_str.startswith("predsjed"):

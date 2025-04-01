@@ -1,6 +1,7 @@
-from .base_parser import BaseParser
+import logging
+import re
 
-import logging, re
+from .base_parser import BaseParser
 
 logger = logging.getLogger("session logger")
 
@@ -9,8 +10,8 @@ class QuestionsParser(BaseParser):
     def __init__(self, item, storage):
         """
         {
-            "author": ["Gradski zastupnik:", " ", "Ivica Lovrić", "Nestranački", " "], 
-            "title": ["Zaduženost Zagrebačkog holdinga d.o.o.", "Pisani odgovor Uprave trgovačkog  društva Zagrebačkog holdinga d.o.o."], 
+            "author": ["Gradski zastupnik:", " ", "Ivica Lovrić", "Nestranački", " "],
+            "title": ["Zaduženost Zagrebačkog holdinga d.o.o.", "Pisani odgovor Uprave trgovačkog  društva Zagrebačkog holdinga d.o.o."],
             "links": [{
                 "href": "https://web.zagreb.hr/Sjednice/2021/sjednice_skupstine_2021.nsf/0/C2B0EA08903C1C2AC12588F6004CDF96/$FILE/Ivica Lovrić_zaduženost Zagrebačkog holdinga d.o.o..pdf",
                 "text": "PITANJE U PISANOM OBLIKU"
@@ -19,7 +20,7 @@ class QuestionsParser(BaseParser):
                 "href": "https://web.zagreb.hr/Sjednice/2021/sjednice_skupstine_2021.nsf/0/FAEF401FB31B9A77C125893D0025AAF2/$FILE/02 Odgovor na pitanje.pdf",
                 "text": "ODGOVOR NA PITANJE"
                 }
-            ], 
+            ],
             "url": "https://web.zagreb.hr/Sjednice/2021/sjednice_skupstine_2021.nsf/PITANJE_WEB?OpenForm&ParentUNID=5A96B3E8B28C4C1CC12588F6004C80B0&font=14"
         }
         """
@@ -27,16 +28,20 @@ class QuestionsParser(BaseParser):
         super(QuestionsParser, self).__init__(storage)
         logger.info(".:QUESTION PARSER:.")
 
-        person = self.storage.people_storage.get_or_add_object({
-            "name": item["author"][2],
-        })
+        person = self.storage.people_storage.get_or_add_object(
+            {
+                "name": item["author"][2],
+            }
+        )
 
         if item["author"][3] == "Nestranački":
             organization = None
         else:
-            organization = self.storage.organization_storage.get_or_add_object({
-                "name": item["author"][3],
-            })
+            organization = self.storage.organization_storage.get_or_add_object(
+                {
+                    "name": item["author"][3],
+                }
+            )
 
         gov_id = re.search(r"ParentUNID=(.*?)(&|TARGET)", item["url"]).group(1)
 
@@ -56,9 +61,11 @@ class QuestionsParser(BaseParser):
 
             session_text = item.get("session_text")[0].strip().strip(".")
 
-            organization = self.storage.organization_storage.get_or_add_object({
-                "name": self.parse_organization(session_text),
-            })
+            organization = self.storage.organization_storage.get_or_add_object(
+                {
+                    "name": self.parse_organization(session_text),
+                }
+            )
 
             session = storage.session_storage.get_or_add_object(
                 {
@@ -84,10 +91,9 @@ class QuestionsParser(BaseParser):
                     link["url"] = link["url"].replace(" ", "+")
                     self.storage.parladata_api.links.set(link)
 
-
     def parse_session_name(self, text):
         no_session = re.search(r"(\d+).", text).group(1)
         return re.search(r"([0-9]{1,2})(\. sjednica) ([a-zA-Zš ]*)", text).group(0)
-    
+
     def parse_organization(self, text):
         return re.search(r"([0-9]{1,2})(\. sjednica) ([a-zA-Zš ]*)", text).group(3)
