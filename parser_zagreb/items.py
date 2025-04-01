@@ -18,6 +18,8 @@ class VoteItem(scrapy.Item):
     session_text = scrapy.Field()
     no_agenda = scrapy.Field()
     url = scrapy.Field()
+    url_text = scrapy.Field()
+    order = scrapy.Field()
 
 class QuestionItem(scrapy.Item):
     author = scrapy.Field()

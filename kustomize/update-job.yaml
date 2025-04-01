@@ -1,0 +1,29 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: parladata-update
+spec:
+  template:
+    spec:
+      containers:
+      - name: parladata-update
+        image: parlaparser-zagreb-update
+        env:
+          - name: DJANGO_SETTINGS_MODULE
+            value: parladata_project.settings.k8s
+          - name: PARLAMETER_LANGUAGE_CODE
+            value: hr
+          - name: LEMMATIZER_LANGUAGE_CODE
+            value: hr
+        envFrom:
+          - secretRef:
+              name: parladata-credentials
+        resources:
+          requests:
+            memory: 3000Mi # classla lemmatizer
+            cpu: 800m
+          limits:
+            memory: 5000Mi # classla lemmatizer
+            cpu: 800m
+      restartPolicy: Never
+  backoffLimit: 1

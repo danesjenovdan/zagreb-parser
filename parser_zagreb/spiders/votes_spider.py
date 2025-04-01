@@ -11,29 +11,48 @@ class VotesSpider(scrapy.Spider):
     ]
 
     def parse(self, response):
-        sessions = response.css("select[name='rb_sjednice']>option::text").extract()
-        for session in reversed(sessions[-1:]):
-            url = f"https://web.zagreb.hr/sjednice/2021/sjednice_skupstine_2021.nsf/DRJ?OpenAgent&{session.strip()}"
-            yield scrapy.Request(
-                url=url,
-                callback=(self.parse_session),
-            )
+
+        session_id = getattr(self, "session_id", None)
+
+        if not session_id:
+            session_id = 1
+
+        session_id = f"{session_id}."
+
+        # sessions = response.css("select[name='rb_sjednice']>option::text").extract()
+        # for session_id in list(reversed(sessions))[2:3]:
+        url = f"https://web.zagreb.hr/sjednice/2021/sjednice_skupstine_2021.nsf/DRJ?OpenAgent&{session_id.strip()}"
+        yield scrapy.Request(
+            url=url,
+            callback=(self.parse_session),
+        )
 
     def parse_session(self, response):
         text_with_session_name = (
             response.css("table")[0].css("tr")[2].css("::text").extract_first().strip()
         )
-        for link in response.css("a.nav::attr(href)").extract():
+        self.data = {
+            "session_text": text_with_session_name,
+            "votes": []
+        }
+        links = response.css("a.nav")
+        self.total_links = len(links)
+        for order, link in enumerate(links):
+            href = link.css("::attr(href)").extract_first()
+            text = link.css("::text").extract_first()
+            print("BLA BLA")
+            print(f"{self.base_url}{href}")
             yield scrapy.Request(
-                url=f"{self.base_url}{link}",
+                url=f"{self.base_url}{href}",
                 callback=(self.parser_vote),
-                meta={"session_text": text_with_session_name},
+                meta={"text": text, "order": order + 1},
             )
 
     def parser_vote(self, response):
         vote_name = response.css("td>b>font::text").extract()
         champions = response.css("td>font::text").extract()
         no_agenda = "".join(response.css("td::text").extract()).strip()
+        no_agenda = no_agenda.replace("TOČKA: ", "").replace(".", "")
 
         links = []
         dom_links = response.css("a")
@@ -44,13 +63,19 @@ class VotesSpider(scrapy.Spider):
                 path = onclick.split("'")[1]
                 href = f"{self.base_url}{path}"
             text = link.css("font::text").extract_first()
-            links.append({"href": href, "text": text.strip()})
+            if text:
+                links.append({"href": href, "text": text.strip()})
 
-        yield VoteItem(
-            vote_name=vote_name,
-            champions=champions,
-            links=links,
-            session_text=response.meta["session_text"],
-            no_agenda=no_agenda,
-            url=response.url,
+        self.data["votes"].append(
+            VoteItem(
+                vote_name=vote_name,
+                champions=champions,
+                links=links,
+                no_agenda=no_agenda,
+                url=response.url,
+                url_text=response.meta["text"],
+                order=response.meta["order"],
+            )
         )
+        if len(self.data["votes"]) == self.total_links:
+            yield self.data
