@@ -15,11 +15,14 @@ class ParserState(Enum):
 
 
 class SpeechesParser(object):
-    def __init__(self, data_storage):
+    def __init__(self, data_storage, session_id=None):
         self.data_storage = data_storage
         path = "files/transkripti"
-        transcript_files = [f for f in listdir(path) if isfile(join(path, f))]
-        transcript_files.sort()
+        if session_id:
+            transcript_files = [f"Fonogram.{session_id}.docx"]
+        else:
+            transcript_files = [f for f in listdir(path) if isfile(join(path, f))]
+            transcript_files.sort()
 
         for file_name in transcript_files:
 

@@ -14,6 +14,7 @@ from parladata_base_api.storages.session_storage import Session
 from parladata_base_api.storages.storage import DataStorage
 
 from parser_zagreb.data_parsers.member_parser import MemberParser
+from parser_zagreb.data_parsers.membership_parser import MembershipParser
 from parser_zagreb.data_parsers.questions_parser import QuestionsParser
 from parser_zagreb.data_parsers.session_note_parser import SessionNotesParser
 from parser_zagreb.data_parsers.votes_parser import VotesParser
@@ -25,6 +26,7 @@ from parser_zagreb.settings import (
     MANDATE_STARTIME,
 )
 from parser_zagreb.spiders.members_spider import MembersSpider
+from parser_zagreb.spiders.memberships_spider import MembershipsSpider
 from parser_zagreb.spiders.questions_spider import QuestionsSpider
 from parser_zagreb.spiders.session_notes_spider import NotesSpider
 from parser_zagreb.spiders.votes_spider import VotesSpider
@@ -53,5 +55,7 @@ class ParserZagrebPipeline:
             QuestionsParser(item, self.storage)
         elif isinstance(spider, MembersSpider):
             MemberParser(item, self.storage)
+        elif isinstance(spider, MembershipsSpider):
+            MembershipParser(item, self.storage)
         else:
             return item
