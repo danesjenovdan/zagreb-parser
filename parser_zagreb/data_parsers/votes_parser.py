@@ -298,7 +298,12 @@ class BallotsXLSParser:
         order = 1
         for row in page_lines:
             print(self.state, row)
-            if not any(row) or row[0] == "Session Name" or row[0] in ["Naziv točke dnevnog reda", "Naziv tocke dnevnog reda"] and single_vote["ballots"]:
+            if (
+                not any(row)
+                or row[0] == "Session Name"
+                or row[0] in ["Naziv točke dnevnog reda", "Naziv tocke dnevnog reda"]
+                and single_vote["ballots"]
+            ):
                 # next vote
                 if not "name" in single_vote:
                     continue

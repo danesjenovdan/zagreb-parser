@@ -25,7 +25,7 @@ class MembershipsSpider(scrapy.Spider):
             print(members)
             if members:
                 role_text = members[0].strip()
-                role_members =  [member.strip() for member in members[1:]]
+                role_members = [member.strip() for member in members[1:]]
             else:
                 members = role.css("td::text").extract()
                 if members:
@@ -34,15 +34,17 @@ class MembershipsSpider(scrapy.Spider):
                     role_members = [member.strip() for member in members[1:]]
                     print(role_members)
             for name in role_members:
-                print({
-                    "name": name,
-                    "club_name": club_name,
-                    "role_text": role_text,
-                })
+                print(
+                    {
+                        "name": name,
+                        "club_name": club_name,
+                        "role_text": role_text,
+                    }
+                )
                 # yield {
-                    # "name": name,
-                    # "club_name": club_name,
-                    # "role_text": role_text,
+                # "name": name,
+                # "club_name": club_name,
+                # "role_text": role_text,
                 # }
                 yield MembershipItem(
                     name=name.strip(),

@@ -77,7 +77,7 @@ class QuestionsParser(BaseParser):
                     "mandate": storage.mandate_id,
                 }
             )
-            #if session.start_time:
+            # if session.start_time:
             #    question_data["timestamp"] = session.start_time#.isoformat()
             question_data["session"] = session.id
 

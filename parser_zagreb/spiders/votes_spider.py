@@ -7,7 +7,7 @@ class VotesSpider(scrapy.Spider):
     name = "votes"
     base_url = "https://web.zagreb.hr"
     start_urls = [
-        "https://web.zagreb.hr/sjednice/2021/sjednice_skupstine_2021.nsf/web_pretraga_autoriziran_font_new?OpenForm"
+        "https://web.zagreb.hr/sjednice/2025/sjednice_skupstine_2025.nsf/web_pretraga_autoriziran_font_new?OpenForm"
     ]
 
     def parse(self, response):
@@ -21,7 +21,7 @@ class VotesSpider(scrapy.Spider):
 
         # sessions = response.css("select[name='rb_sjednice']>option::text").extract()
         # for session_id in list(reversed(sessions))[2:3]:
-        url = f"https://web.zagreb.hr/sjednice/2021/sjednice_skupstine_2021.nsf/DRJ?OpenAgent&{session_id.strip()}"
+        url = f"https://web.zagreb.hr/sjednice/2025/sjednice_skupstine_2025.nsf/DRJ?OpenAgent&{session_id.strip()}"
         yield scrapy.Request(
             url=url,
             callback=(self.parse_session),
