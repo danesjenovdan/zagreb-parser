@@ -35,3 +35,9 @@ class MemberItem(scrapy.Item):
     name = scrapy.Field()
     committee = scrapy.Field()
     party = scrapy.Field()
+
+
+class MembershipItem(scrapy.Item):
+    name = scrapy.Field()
+    role = scrapy.Field()
+    organization = scrapy.Field()

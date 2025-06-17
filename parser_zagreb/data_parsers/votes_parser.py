@@ -73,6 +73,7 @@ class VotesParser(BaseParser):
         try:
             xml_votes = BallotsXLSParser().parse_file(file_name)
         except FileNotFoundError:
+            print("FileNotFoundError")
             return
 
         self.log_file.write(
@@ -272,7 +273,7 @@ Povezava na motion: {motion_url}
 
 
 class BallotsXLSParser:
-    def parse_file(self, file_path="files/41. sjednica GSGZ.xlsx"):
+    def parse_file(self, file_path="files/1. sjednica GSGZ.xlsx"):
         wb_obj = openpyxl.load_workbook(file_path)
         sheet_obj = wb_obj.active
         self.file_path = file_path
@@ -297,7 +298,7 @@ class BallotsXLSParser:
         order = 1
         for row in page_lines:
             print(self.state, row)
-            if not any(row) or row[0] == "Session Name":
+            if not any(row) or row[0] == "Session Name" or row[0] in ["Naziv točke dnevnog reda", "Naziv tocke dnevnog reda"] and single_vote["ballots"]:
                 # next vote
                 if not "name" in single_vote:
                     continue
