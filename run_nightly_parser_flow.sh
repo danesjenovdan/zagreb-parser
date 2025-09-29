@@ -4,6 +4,7 @@ echo "lematize speeches"
 python manage.py lemmatize_speeches
 echo "set tfidf"
 python manage.py set_tfidf_for_sessions
+python manage.py set_tfidf
 echo "run analysis for today"
 python manage.py daily_update
 echo "update legislation to solr"

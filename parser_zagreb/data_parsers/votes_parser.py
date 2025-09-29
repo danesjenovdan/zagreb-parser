@@ -83,7 +83,7 @@ class VotesParser(BaseParser):
         self.log_file.write(
             f"\n ----> {self.parse_session_name(item.get('session_text'))} <---- \n"
         )
-        url = f"https://web.zagreb.hr/sjednice/2021/sjednice_skupstine_2021.nsf/DRJ?OpenAgent&{session_no}"
+        url = f"https://web.zagreb.hr/sjednice/2025/sjednice_skupstine_2025.nsf/DRJ?OpenAgent&{session_no}"
         self.log_file.write(f"\nLink do sjednice: {url} \n")
 
         item["votes"].sort(key=lambda x: x.get("order"))
@@ -273,7 +273,7 @@ Povezava na motion: {motion_url}
 
 
 class BallotsXLSParser:
-    def parse_file(self, file_path="files/1. sjednica GSGZ.xlsx"):
+    def parse_file(self, file_path="files/2. sjednica GSGZ.xlsx"):
         wb_obj = openpyxl.load_workbook(file_path)
         sheet_obj = wb_obj.active
         self.file_path = file_path
