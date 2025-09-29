@@ -7,15 +7,15 @@ class QuestionsSpider(scrapy.Spider):
     name = "questions"
     base_url = "https://web.zagreb.hr"
     start_urls = [
-        "https://web.zagreb.hr/sjednice/2021/sjednice_skupstine_2021.nsf/web_pitanja_van_sjednice?OpenAgent",
-        "https://web.zagreb.hr/sjednice/2021/sjednice_skupstine_2021.nsf/web_pretraga_autoriziran_font_new?OpenForm",
+        "https://web.zagreb.hr/sjednice/2025/sjednice_skupstine_2025.nsf/web_pitanja_van_sjednice?OpenAgent",
+        "https://web.zagreb.hr/sjednice/2025/sjednice_skupstine_2025.nsf/web_pretraga_autoriziran_font_new?OpenForm",
     ]
 
     def parse(self, response):
         sessions = response.css("select[name='rb_sjednice_1']>option::text").extract()
         if sessions:
             for session in reversed(sessions):
-                url = f"https://web.zagreb.hr/Sjednice/2021/SkupstinaZapisi_2021.nsf/web_pitanja?OpenAgent&{session.strip()}."
+                url = f"https://web.zagreb.hr/Sjednice/2025/SkupstinaZapisi_2025.nsf/web_pitanja?OpenAgent&{session.strip()}."
                 yield scrapy.Request(
                     url=url,
                     callback=(self.parse_single_session),

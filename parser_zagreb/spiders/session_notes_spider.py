@@ -7,7 +7,7 @@ class NotesSpider(scrapy.Spider):
     name = "notes"
     base_url = "https://web.zagreb.hr"
     start_urls = [
-        "https://web.zagreb.hr/sjednice/2021/sjednice_skupstine_2021.nsf/zapisnik?OpenAgent"
+        "https://web.zagreb.hr/sjednice/2025/sjednice_skupstine_2025.nsf/zapisnik?OpenAgent"
     ]
 
     def parse(self, response):
